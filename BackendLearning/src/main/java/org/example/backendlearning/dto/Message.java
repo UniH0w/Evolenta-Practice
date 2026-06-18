@@ -1,9 +1,7 @@
 package org.example.backendlearning.dto;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,13 +20,8 @@ public class Message {
     private String text;
     private LocalDateTime time;
 
-    public Message() {
-    }
-
-    public Message(String title, String text, LocalDateTime time) {
-        this.title = title;
-        this.text = text;
-        this.time = time;
-    }
+    @ManyToOne
+    @JsonIgnore
+    private Person person;
 
 }

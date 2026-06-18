@@ -1,66 +1,45 @@
 package org.example.backendlearning.controller;
 
 import org.example.backendlearning.dto.Person;
-import org.example.backendlearning.repository.PersonRepository;
-import org.springframework.http.HttpStatus;
+import org.example.backendlearning.service.PersonService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
-
 @RestController
+@RequestMapping("/person")
 public class PersonController {
 
-    private final PersonRepository repository;
+    private final PersonService service;
 
-    public PersonController(PersonRepository repository) {
-        this.repository = repository;
+    public PersonController(PersonService service) {
+        this.service = service;
     }
 
-    @GetMapping("/person")
-    public Iterable<Person> getPersons() {
-        return repository.findAll();
+    @GetMapping
+    public Iterable<Person> getAll() {
+        return service.getAll();
     }
 
-    @GetMapping("/person/{id}")
-    public Optional<Person> getPerson(@PathVariable int id) {
-        return repository.findById(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<Person> getById(@PathVariable int id) {
+        return service.getById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/person")
-    public Person addPerson(@RequestBody Person person) {
-        return repository.save(person);
+    @PostMapping
+    public Person create(@RequestBody Person person) {
+        return service.save(person);
     }
 
-    @PutMapping("/person/{id}")
-    public ResponseEntity<Person> updatePerson(
-            @PathVariable int id,
-            @RequestBody Person person) {
-
-        return repository.findById(id)
-                .map(existing -> {
-
-                    existing.setFirstname(person.getFirstname());
-                    existing.setSurname(person.getSurname());
-                    existing.setLastname(person.getLastname());
-                    existing.setBirthday(person.getBirthday());
-
-                    return new ResponseEntity<>(
-                            repository.save(existing),
-                            HttpStatus.OK
-                    );
-                })
-                .orElseGet(() -> {
-                    person.setId(id);
-                    return new ResponseEntity<>(
-                            repository.save(person),
-                            HttpStatus.CREATED
-                    );
-                });
+    @PutMapping("/{id}")
+    public ResponseEntity<Person> update(@PathVariable int id, @RequestBody Person person) {
+        return service.update(id, person);
     }
 
-    @DeleteMapping("/person/{id}")
-    public void deletePerson(@PathVariable int id) {
-        repository.deleteById(id);
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable int id) {
+        service.delete(id);
     }
 }
