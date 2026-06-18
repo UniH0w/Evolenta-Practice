@@ -4,6 +4,7 @@ import org.example.backendlearning.dto.Person;
 import org.example.backendlearning.repository.PersonRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -28,16 +29,14 @@ public class PersonService {
         return repository.save(person);
     }
 
+    @Transactional
     public ResponseEntity<Person> update(int id, Person person) {
-        return repository.findById(id)
-                .map(existing -> {
-                    existing.setFirstname(person.getFirstname());
-                    existing.setSurname(person.getSurname());
-                    existing.setLastname(person.getLastname());
-                    existing.setBirthday(person.getBirthday());
-                    return ResponseEntity.ok(repository.save(existing));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        if (!repository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        repository.deleteById(id);
+        person.setId(id);
+        return ResponseEntity.ok(repository.save(person));
     }
 
     public void delete(int id) {

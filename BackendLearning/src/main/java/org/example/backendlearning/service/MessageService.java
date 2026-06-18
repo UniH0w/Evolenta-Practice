@@ -7,6 +7,7 @@ import org.example.backendlearning.repository.PersonRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -41,14 +42,23 @@ public class MessageService {
         return messageRepository.save(message);
     }
 
+    @Transactional
     public ResponseEntity<Message> updateMessage(int id, Message updated) {
-        return messageRepository.findById(id)
-                .map(existing -> {
-                    existing.setTitle(updated.getTitle());
-                    existing.setText(updated.getText());
-                    return ResponseEntity.ok(messageRepository.save(existing));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Message> existingOpt = messageRepository.findById(id);
+        if (existingOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Message existing = existingOpt.get();
+        LocalDateTime time = existing.getTime();
+        Person person = existing.getPerson();
+
+        messageRepository.deleteById(id);
+        updated.setId(id);
+        updated.setTime(time);
+        updated.setPerson(person);
+
+        return ResponseEntity.ok(messageRepository.save(updated));
     }
 
     public ResponseEntity<Void> deleteMessage(int id) {

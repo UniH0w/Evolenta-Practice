@@ -23,4 +23,5 @@ public class Message {
     @ManyToOne
     @JsonIgnore
     private Person person;
+
 }
