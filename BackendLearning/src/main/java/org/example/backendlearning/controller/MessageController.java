@@ -1,65 +1,71 @@
 package org.example.backendlearning.controller;
 
 import org.example.backendlearning.dto.Message;
-import org.example.backendlearning.repository.MessageRepository;
-import org.springframework.http.HttpStatus;
+import org.example.backendlearning.service.MessageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
+import java.util.List;
 
 @RestController
 public class MessageController {
 
-    private final MessageRepository repository;
+    private final MessageService service;
 
-    public MessageController(MessageRepository repository) {
-        this.repository = repository;
+    public MessageController(MessageService service) {
+        this.service = service;
     }
 
     @GetMapping("/message")
-    public Iterable<Message> getMessages() {
-        return repository.findAll();
+    public List<Message> getAllMessages() {
+        return service.getAllMessages();
     }
 
     @GetMapping("/message/{id}")
-    public Optional<Message> getMessage(@PathVariable int id) {
-        return repository.findById(id);
+    public ResponseEntity<Message> getMessageById(@PathVariable int id) {
+        return service.getMessageById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping("/message")
-    public Message addMessage(@RequestBody Message message) {
-        return repository.save(message);
+    public Message createMessage(@RequestBody Message message) {
+        return service.createStandaloneMessage(message);
     }
 
     @PutMapping("/message/{id}")
-    public ResponseEntity<Message> updateMessage(
-            @PathVariable int id,
-            @RequestBody Message message) {
-
-        return repository.findById(id)
-                .map(existing -> {
-
-                    existing.setTitle(message.getTitle());
-                    existing.setText(message.getText());
-                    existing.setTime(message.getTime());
-
-                    return new ResponseEntity<>(
-                            repository.save(existing),
-                            HttpStatus.OK
-                    );
-                })
-                .orElseGet(() -> {
-                    message.setId(id);
-                    return new ResponseEntity<>(
-                            repository.save(message),
-                            HttpStatus.CREATED
-                    );
-                });
+    public ResponseEntity<Message> updateMessage(@PathVariable int id,
+                                                 @RequestBody Message message) {
+        return service.updateMessage(id, message);
     }
 
     @DeleteMapping("/message/{id}")
-    public void deleteMessage(@PathVariable int id) {
-        repository.deleteById(id);
+    public ResponseEntity<Void> deleteMessage(@PathVariable int id) {
+        return service.deleteMessage(id);
+    }
+
+    @GetMapping("/person/{personId}/message")
+    public List<Message> getAllByPerson(@PathVariable int personId) {
+        return service.getAllByPerson(personId);
+    }
+
+    @GetMapping("/person/{personId}/message/{messageId}")
+    public ResponseEntity<Message> getByPersonAndId(@PathVariable int personId,
+                                                    @PathVariable int messageId) {
+        return service.getByPersonAndId(personId, messageId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/person/{personId}/message")
+    public ResponseEntity<Message> createForPerson(@PathVariable int personId,
+                                                   @RequestBody Message message) {
+        return service.createForPerson(personId, message);
+    }
+
+    @DeleteMapping("/person/{personId}/message/{messageId}")
+    public ResponseEntity<Void> deleteForPerson(@PathVariable int personId,
+                                                @PathVariable int messageId) {
+        return service.deleteForPerson(personId, messageId);
     }
 }

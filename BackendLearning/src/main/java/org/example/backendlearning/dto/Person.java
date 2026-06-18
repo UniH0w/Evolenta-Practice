@@ -1,13 +1,11 @@
 package org.example.backendlearning.dto;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -23,15 +21,6 @@ public class Person {
     private String lastname;
     private String birthday;
 
-    public Person() {
-    }
-
-    public Person(String firstname, String surname, String lastname, String birthday) {
-        this.firstname = firstname;
-        this.surname = surname;
-        this.lastname = lastname;
-        this.birthday = birthday;
-    }
-
-
+    @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Message> messages = new ArrayList<>();
 }
