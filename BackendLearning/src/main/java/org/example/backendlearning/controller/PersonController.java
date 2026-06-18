@@ -1,60 +1,66 @@
 package org.example.backendlearning.controller;
 
 import org.example.backendlearning.dto.Person;
+import org.example.backendlearning.repository.PersonRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/person")
 public class PersonController {
 
-    private final List<Person> persons = new ArrayList<>(Arrays.asList(
-            new Person(1, "Ivan", "Ivanovich", "Ivanov",
-                    LocalDate.of(1999, 2, 3)),
-            new Person(2, "Petr", "Petrovich", "Petrov",
-                    LocalDate.of(2002, 2, 2))
-    ));
+    private final PersonRepository repository;
 
-    @GetMapping
-    public List<Person> getPersons() {
-        return persons;
+    public PersonController(PersonRepository repository) {
+        this.repository = repository;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/person")
+    public Iterable<Person> getPersons() {
+        return repository.findAll();
+    }
+
+    @GetMapping("/person/{id}")
     public Optional<Person> getPerson(@PathVariable int id) {
-        return persons.stream()
-                .filter(p -> p.getId() == id)
-                .findFirst();
+        return repository.findById(id);
     }
 
-    @PostMapping
+    @PostMapping("/person")
     public Person addPerson(@RequestBody Person person) {
-        persons.add(person);
-        return person;
+        return repository.save(person);
     }
 
-    @PutMapping("/{id}")
-    public Person updatePerson(@PathVariable int id,
-                               @RequestBody Person person) {
+    @PutMapping("/person/{id}")
+    public ResponseEntity<Person> updatePerson(
+            @PathVariable int id,
+            @RequestBody Person person) {
 
-        for (int i = 0; i < persons.size(); i++) {
-            if (persons.get(i).getId() == id) {
-                persons.set(i, person);
-                return person;
-            }
-        }
+        return repository.findById(id)
+                .map(existing -> {
 
-        persons.add(person);
-        return person;
+                    existing.setFirstname(person.getFirstname());
+                    existing.setSurname(person.getSurname());
+                    existing.setLastname(person.getLastname());
+                    existing.setBirthday(person.getBirthday());
+
+                    return new ResponseEntity<>(
+                            repository.save(existing),
+                            HttpStatus.OK
+                    );
+                })
+                .orElseGet(() -> {
+                    person.setId(id);
+                    return new ResponseEntity<>(
+                            repository.save(person),
+                            HttpStatus.CREATED
+                    );
+                });
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/person/{id}")
     public void deletePerson(@PathVariable int id) {
-        persons.removeIf(p -> p.getId() == id);
+        repository.deleteById(id);
     }
 }

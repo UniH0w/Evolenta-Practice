@@ -1,68 +1,65 @@
 package org.example.backendlearning.controller;
 
 import org.example.backendlearning.dto.Message;
+import org.example.backendlearning.repository.MessageRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/message")
 public class MessageController {
 
-    private final List<Message> messages = new ArrayList<>(Arrays.asList(
-            new Message(
-                    1,
-                    "Первое сообщение",
-                    "Текст первого сообщения",
-                    LocalDateTime.now()
-            ),
-            new Message(
-                    2,
-                    "Второе сообщение",
-                    "Текст второго сообщения",
-                    LocalDateTime.now()
-            )
-    ));
+    private final MessageRepository repository;
 
-    @GetMapping
-    public List<Message> getMessages() {
-        return messages;
+    public MessageController(MessageRepository repository) {
+        this.repository = repository;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/message")
+    public Iterable<Message> getMessages() {
+        return repository.findAll();
+    }
+
+    @GetMapping("/message/{id}")
     public Optional<Message> getMessage(@PathVariable int id) {
-        return messages.stream()
-                .filter(m -> m.getId() == id)
-                .findFirst();
+        return repository.findById(id);
     }
 
-    @PostMapping
+    @PostMapping("/message")
     public Message addMessage(@RequestBody Message message) {
-        messages.add(message);
-        return message;
+        return repository.save(message);
     }
 
-    @PutMapping("/{id}")
-    public Message updateMessage(@PathVariable int id,
-                                 @RequestBody Message message) {
+    @PutMapping("/message/{id}")
+    public ResponseEntity<Message> updateMessage(
+            @PathVariable int id,
+            @RequestBody Message message) {
 
-        for (int i = 0; i < messages.size(); i++) {
-            if (messages.get(i).getId() == id) {
-                messages.set(i, message);
-                return message;
-            }
-        }
+        return repository.findById(id)
+                .map(existing -> {
 
-        messages.add(message);
-        return message;
+                    existing.setTitle(message.getTitle());
+                    existing.setText(message.getText());
+                    existing.setTime(message.getTime());
+
+                    return new ResponseEntity<>(
+                            repository.save(existing),
+                            HttpStatus.OK
+                    );
+                })
+                .orElseGet(() -> {
+                    message.setId(id);
+                    return new ResponseEntity<>(
+                            repository.save(message),
+                            HttpStatus.CREATED
+                    );
+                });
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/message/{id}")
     public void deleteMessage(@PathVariable int id) {
-        messages.removeIf(m -> m.getId() == id);
+        repository.deleteById(id);
     }
 }
