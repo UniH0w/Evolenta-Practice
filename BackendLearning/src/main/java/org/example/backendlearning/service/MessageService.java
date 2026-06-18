@@ -94,7 +94,12 @@ public class MessageService {
         return ResponseEntity.ok(messageRepository.save(message));
     }
 
+    @Transactional
     public ResponseEntity<Void> deleteForPerson(int personId, int messageId) {
+        if (!personRepository.existsById(personId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
         Optional<Message> messageOpt = messageRepository.findById(messageId);
 
         if (messageOpt.isEmpty()) {
@@ -107,7 +112,7 @@ public class MessageService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        messageRepository.delete(message);
+        messageRepository.deleteById(messageId);
         return ResponseEntity.ok().build();
     }
 }
