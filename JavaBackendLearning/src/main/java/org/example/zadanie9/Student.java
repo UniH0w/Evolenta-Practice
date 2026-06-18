@@ -7,7 +7,9 @@ public class Student implements Learner {
     @Override
     public void learn() {
         System.out.println("Я учусь. .zZ");
-        IntStream.range(0, 1000000).forEach(i -> Math.log(i));
+        IntStream.range(0, 1000000)
+                .mapToDouble(Math::log)
+                .sum();
         System.out.println("Я закончил учиться");
     }
 }
