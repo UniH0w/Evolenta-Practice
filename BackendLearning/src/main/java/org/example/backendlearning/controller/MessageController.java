@@ -1,68 +1,47 @@
 package org.example.backendlearning.controller;
 
 import org.example.backendlearning.dto.Message;
+import org.example.backendlearning.service.MessageService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/message")
 public class MessageController {
 
-    private final List<Message> messages = new ArrayList<>(Arrays.asList(
-            new Message(
-                    1,
-                    "Первое сообщение",
-                    "Текст первого сообщения",
-                    LocalDateTime.now()
-            ),
-            new Message(
-                    2,
-                    "Второе сообщение",
-                    "Текст второго сообщения",
-                    LocalDateTime.now()
-            )
-    ));
+    private final MessageService service;
+
+    public MessageController(MessageService service) {
+        this.service = service;
+    }
 
     @GetMapping
-    public List<Message> getMessages() {
-        return messages;
+    public List<Message> getAllMessages() {
+        return service.getAllMessages();
     }
 
     @GetMapping("/{id}")
-    public Optional<Message> getMessage(@PathVariable int id) {
-        return messages.stream()
-                .filter(m -> m.getId() == id)
-                .findFirst();
+    public ResponseEntity<Message> getMessageById(@PathVariable int id) {
+        return service.getMessageById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public Message addMessage(@RequestBody Message message) {
-        messages.add(message);
-        return message;
+    public Message createMessage(@RequestBody Message message) {
+        return service.createStandaloneMessage(message);
     }
 
     @PutMapping("/{id}")
-    public Message updateMessage(@PathVariable int id,
-                                 @RequestBody Message message) {
-
-        for (int i = 0; i < messages.size(); i++) {
-            if (messages.get(i).getId() == id) {
-                messages.set(i, message);
-                return message;
-            }
-        }
-
-        messages.add(message);
-        return message;
+    public ResponseEntity<Message> updateMessage(@PathVariable int id,
+                                                 @RequestBody Message message) {
+        return service.updateMessage(id, message);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteMessage(@PathVariable int id) {
-        messages.removeIf(m -> m.getId() == id);
+    public ResponseEntity<Void> deleteMessage(@PathVariable int id) {
+        return service.deleteMessage(id);
     }
 }

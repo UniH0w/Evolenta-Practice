@@ -1,28 +1,27 @@
 package org.example.backendlearning.dto;
+
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
+@Entity
 public class Person {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+
     private String firstname;
     private String surname;
     private String lastname;
-    private LocalDate birthday;
+    private String birthday;
 
-    public Person() {
-    }
+    @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Message> messages = new ArrayList<>();
 
-    public Person(int id, String firstname, String surname,
-                  String lastname, LocalDate birthday) {
-        this.id = id;
-        this.firstname = firstname;
-        this.surname = surname;
-        this.lastname = lastname;
-        this.birthday = birthday;
-    }
 }
